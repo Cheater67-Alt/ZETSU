@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jut-Clone — Бесплатный Рабочий Онлайн Плеер</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="container header-flex">
+            <a href="#" class="logo">JUT<span>-CLONE</span></a>
+            <nav class="nav-links">
+                <a href="#">Все аниме</a>
+                <a href="#">Онгоинги</a>
+            </nav>
+            <div class="status-badge">Сервер: <span id="server-status" style="color: #00ffcc;">Подключение...</span></div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Блок встроенного Видеоплеера -->
+        <section class="player-section">
+            <h2 id="current-title">Выберите аниме для просмотра из списка ниже</h2>
+            <div class="video-container">
+                <video id="anime-player" controls poster="https://unsplash.com">
+                    <source id="video-source" src="" type="video/mp4">
+                    Ваш браузер не поддерживает встроенные видеоплееры.
+                </video>
+            </div>
+        </section>
+
+        <!-- Блок сетки Аниме, заполняемый сервером -->
+        <section class="anime-section">
+            <h2 class="section-title">Доступные тайтлы (Загружаются из Базы Данных)</h2>
+            <div class="anime-grid" id="anime-container">
+                <!-- Карточки будут добавлены автоматически с помощью JS -->
+                <p style="color: #7c7c8a;">Загрузка списка аниме с сервера...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container text-center">
+            <p>&copy; 2026 JUT-CLONE. База данных подключена.</p>
+        </div>
+    </footer>
+
+    <!-- Скрипт связи фронтенда с бэкендом -->
+    <script>
+        async function loadAnime() {
+            try {
+                const response = await fetch('/api/anime');
+                const animeList = await response.json();
+                
+                document.getElementById('server-status').innerText = 'Онлайн';
+                const container = document.getElementById('anime-container');
+                container.innerHTML = ''; // Очищаем текст загрузки
+
+                animeList.forEach(anime => {
+                    const card = document.createElement('div');
+                    card.className = 'anime-card';
+                    card.innerHTML = `
+                        <div class="poster-wrapper">
+                            <img src="${anime.image}" alt="${anime.title}">
+                            <span class="rating">${anime.rating}</span>
+                        </div>
+                        <h3>${anime.title}</h3>
+                        <p class="episode-info">${anime.episodes}</p>
+                    `;
+                    
+                    // Клик на карточку меняет видео в плеере
+                    card.addEventListener('click', () => {
+                        document.getElementById('current-title').innerText = `Просмотр: ${anime.title} (${anime.episodes})`;
+                        const player = document.getElementById('anime-player');
+                        const source = document.getElementById('video-source');
+                        
+                        source.src = anime.videoUrl;
+                        player.load();
+                        player.play();
+                        
+                        // Плавный скролл наверх к плееру
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error(error);
+                document.getElementById('server-status').innerText = 'Ошибка';
+                document.getElementById('anime-container').innerHTML = '<p style="color: red;">Не удалось загрузить данные с сервера.</p>';
+            }
+        }
+
+        // Запуск загрузки при старте страницы
+        window.onload = loadAnime;
+    </script>
+</body>
+</html>
